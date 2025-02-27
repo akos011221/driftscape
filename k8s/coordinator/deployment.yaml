@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coordinator
+  template:
+    metadata:
+      labels:
+        app: coordinator
+    spec:
+      containers:
+        - name: coordinator
+          image: driftscape-coordinator
+          ports:
+          - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: coordinator

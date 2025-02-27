@@ -1,0 +1,12 @@
+FROM golang:1.23.2 AS builder
+WORKDIR /app
+COPY go.mod ./
+RUN go mod download
+COPY cmd/region/ ./cmd/region/
+RUN GOOS=linux GOARCH=amd64 go build -o driftscape-region ./cmd/region
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/driftscape-region .
+EXPOSE 9091
+CMD ["./driftscape-region"]

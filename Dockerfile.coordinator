@@ -1,0 +1,13 @@
+FROM golang:1.23.2 AS builder
+WORKDIR /app
+COPY go.mod ./
+RUN go mod download
+COPY cmd/coordinator/ ./cmd/coordinator/
+RUN GOOS=linux GOARCH=amd64 go build -o driftscape-coordinator ./cmd/coordinator
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/driftscape-coordinator .
+EXPOSE 8080
+CMD ["./driftscape-coordinator"]
+
