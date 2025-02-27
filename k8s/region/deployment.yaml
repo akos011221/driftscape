@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: region
-        image: driftscape-region
+        image: orbanakos2312/driftscape-region
         ports:
         - containerPort: 8081
 ---

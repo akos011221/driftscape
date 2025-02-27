@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: coordinator
-          image: driftscape-coordinator
+          image: orbanakos2312/driftscape-coordinator
           ports:
           - containerPort: 8080
 ---
