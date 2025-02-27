@@ -18,9 +18,9 @@ func main() {
 	// A loop to keep asking for commands
 	scanner := bufio.NewScanner(os.Stdin) // Reads the keyboard input
 	for {
-		fmt.Print("> ") // Shows a prompt to the user
-		scanner.Scan()  // Waits for Enter hit
-		input := scanner.Text() // Grabs what you typed as a string
+		fmt.Print("> ")                // Shows a prompt to the user
+		scanner.Scan()                 // Waits for Enter hit
+		input := scanner.Text()        // Grabs what you typed as a string
 		words := strings.Fields(input) // Splits the input into words
 
 		// If you didn't type anything, skip and ask again
@@ -54,7 +54,7 @@ func main() {
 // look asks the Coordinator what's at your current spot (x,y)
 func look(x, y int) {
 	// Builds a web address like "http://coordinator:8080/look?x=0y=0"
-	url := fmt.Sprintf("http://localhost:8080/look?x=%d&y=%d", x, y)
+	url := fmt.Sprintf("http://coordinator.default.svc.cluster.local:8080/look?x=%d&y=%d", x, y)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't see anything-world's not responding!")
@@ -88,7 +88,7 @@ func move(x, y *int, direction string) {
 	}
 
 	// Tell the Coordinator: "I'm moving to (newX, newY)"
-	url := fmt.Sprintf("http://localhost:8080/move?x=%d&y=%d", newX, newY)
+	url := fmt.Sprintf("http://coordinator.default.svc.cluster.local:8080/move?x=%d&y=%d", newX, newY)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't move-world's not responding!")
@@ -104,5 +104,3 @@ func move(x, y *int, direction string) {
 	// If it worked, update your position
 	*x, *y = newX, newY
 }
-
-

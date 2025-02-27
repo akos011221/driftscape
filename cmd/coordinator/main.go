@@ -22,7 +22,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 	// Gets x and y from the request (e.g., "?x=0&y=1")
 	xStr := r.URL.Query().Get("x")
 	yStr := r.URL.Query().Get("y")
-	
+
 	x, err := strconv.Atoi(xStr)
 	if err != nil {
 		http.Error(w, "Bad x!", 400)
@@ -72,7 +72,7 @@ func moveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad y!", 400)
 		return
 	}
-	
+
 	key := fmt.Sprintf("%d,%d", x, y)
 	if _, exists := regions[key]; !exists {
 		regions[key] = "region-" + key // Fake pod spawn
