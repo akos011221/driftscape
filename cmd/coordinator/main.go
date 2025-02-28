@@ -67,7 +67,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ASk the region pod for its description
+	// Ask the region pod for its description
 	podName := fmt.Sprintf("region-%d-%d", x, y)
 	url := fmt.Sprintf("http://%s:8081/desc", podName)
 	resp, err := http.Get(url)
