@@ -11,6 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	intstr "k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -156,7 +157,7 @@ func spawnRegion(x, y int) string {
 			Name: podName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1),
+			Replicas: convert[int32, *int32](1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "region",
@@ -207,7 +208,7 @@ func spawnRegion(x, y int) string {
 				"y":   strconv.Itoa(y),
 			},
 			Ports: []corev1.ServicePort{
-				{Port: 8081, TargetPort: int32Ptr(8081).IntVal},
+				{Port: 8081, TargetPort: convert[int32, intstr.IntOrString](8081)},
 			},
 		},
 	}
@@ -237,5 +238,7 @@ func parsePosition(pos string) (int, int) {
 	return x, y
 }
 
-// int32Ptr is a helper for Kubernetes pointers
-func int32Ptr(i int32) *int32 { return &i }
+// convert converts src of type S to type D
+func convert[S, D any](src S) D { 
+	return any(src).(D)
+}
