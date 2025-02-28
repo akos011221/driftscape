@@ -19,12 +19,13 @@ import (
 var (
 	rdb       *redis.Client
 	clientset *kubernetes.Clientset
+	domain = "default.svc.driftscape-cluster.oraclecloud.com"
 )
 
 func main() {
-	// Connect to Redis (assumes redis:6379 in Kubernetes)
+	// Connect to Redis (assumes redis.<domain>:6379 in Kubernetes)
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "redis:6379", // Service name in K8s
+		Addr: fmt.Sprintf("redis.%s:6379", domain), // Service DNS in K8s
 	})
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
@@ -70,7 +71,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Ask the region pod for its description
 	podName := fmt.Sprintf("region-%d-%d", x, y)
-	url := fmt.Sprintf("http://%s:8081/desc", podName)
+	url := fmt.Sprintf("http://%s.%s:8081/desc", podName, domain)
 	resp, err := http.Get(url)
 	if err != nil {
 		// Fallback description if the pod isn't ready yet
@@ -120,7 +121,7 @@ func moveHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get description from new region
 	podName := fmt.Sprintf("region-%d-%d", x, y)
-	url := fmt.Sprintf("http://%s:8081/desc", podName)
+	url := fmt.Sprintf("http://%s.%s:8081/desc", podName, domain)
 	resp, err := http.Get(url)
 	if err != nil {
 		// Fallback description if the pod isn't ready yet

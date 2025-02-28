@@ -12,12 +12,15 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var rdb *redis.Client
+var (
+	rdb *redis.Client
+	domain = "default.svc.driftscape-cluster.oraclecloud.com"
+)
 
 func main() {
 	// Connect to Redis
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+		Addr: fmt.Sprintf("redis.%d:6379", domain),
 	})
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
