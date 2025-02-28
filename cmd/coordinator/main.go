@@ -58,11 +58,10 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current region from Redis
+	// If new or re-visited region, spawn it
 	key := fmt.Sprintf("region:%d,%d", x, y)
 	regionData, err := rdb.Get(context.Background(), key).Result()
-	if err == redis.Nil {
-		// New region, spawn it
+	if err == redis.Nil || !regionExists(x, y) {
 		regionData = spawnRegion(x, y)
 	} else if err != nil {
 		http.Error(w, "Redis error", 500)
@@ -106,10 +105,10 @@ func moveHandler(w http.ResponseWriter, r *http.Request) {
 		deleteRegion(oldX, oldY)
 	}
 
-	// Check or spawn new region
+	// If new or re-visited region, spawn it
 	key := fmt.Sprintf("region:%d,%d", x, y)
 	regionData, err := rdb.Get(context.Background(), key).Result()
-	if err == redis.Nil {
+	if err == redis.Nil || !regionExists(x, y) {
 		regionData = spawnRegion(x, y)
 	} else if err != nil {
 		http.Error(w, "Redis error", 500)
@@ -153,6 +152,22 @@ func getXY(r *http.Request) (int, int, error) {
 // spawnRegion creates a new region pod and saves it to Redis
 func spawnRegion(x, y int) string {
 	podName := fmt.Sprintf("region-%d-%d", x, y)
+	// Sanitize x, y for labels (replace negative with 'n')
+	xLabel := strconv.Itoa(x)
+	if x < 0 {
+		xLabel = "n" + strconv.Itoa(-x)
+	}
+	yLabel := strconv.Itoa(y)
+	if y < 0 {
+		yLabel = "n" + strconv.Itoa(-y)
+	}
+
+	// Check if Deployment exists, delete if broken
+	_, err := clientset.AppsV1().Deployments("default").Get(context.Background(), podName, metav1.GetOptions{})
+	if err == nil {
+		deleteRegion(x, y) // Clean up stale Deployment
+	}
+
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: podName,
@@ -162,16 +177,16 @@ func spawnRegion(x, y int) string {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "region",
-					"x":   strconv.Itoa(x),
-					"y":   strconv.Itoa(y),
+					"x":   xLabel,
+					"y":   yLabel,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"app": "region",
-						"x":   strconv.Itoa(x),
-						"y":   strconv.Itoa(y),
+						"x":   xLabel,
+						"y":   yLabel,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -192,7 +207,7 @@ func spawnRegion(x, y int) string {
 	}
 
 	// Create Deployment in default namespace
-	_, err := clientset.AppsV1().Deployments("default").Create(context.Background(), deployment, metav1.CreateOptions{})
+	_, err = clientset.AppsV1().Deployments("default").Create(context.Background(), deployment, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("Failed to spawn region:", err)
 	}
@@ -205,8 +220,8 @@ func spawnRegion(x, y int) string {
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
 				"app": "region",
-				"x":   strconv.Itoa(x),
-				"y":   strconv.Itoa(y),
+				"x":   xLabel,
+				"y":   yLabel,
 			},
 			Ports: []corev1.ServicePort{
 				{Port: 8081, TargetPort: intstr.FromInt(8081)},
@@ -237,6 +252,12 @@ func parsePosition(pos string) (int, int) {
 	x, _ := strconv.Atoi(parts[0])
 	y, _ := strconv.Atoi(parts[1])
 	return x, y
+}
+
+func regionExists(x, y int) bool {
+	podName := fmt.Sprintf("region-%d-%d", x, y)
+	_, err := clientset.AppsV1().Deployments("default").Get(context.Background(), podName, metav1.GetOptions{})
+	return err == nil
 }
 
 // int32Ptr creates a pointer to an int32 value
