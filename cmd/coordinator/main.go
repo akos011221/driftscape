@@ -19,7 +19,7 @@ import (
 var (
 	rdb       *redis.Client
 	clientset *kubernetes.Clientset
-	domain = "default.svc.driftscape-cluster.oraclecloud.com"
+	domain    = "default.svc.cluster.local"
 )
 
 func main() {
@@ -158,7 +158,7 @@ func spawnRegion(x, y int) string {
 			Name: podName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: convert[int32, *int32](1),
+			Replicas: convert[int, *int32](1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "region",
@@ -209,7 +209,7 @@ func spawnRegion(x, y int) string {
 				"y":   strconv.Itoa(y),
 			},
 			Ports: []corev1.ServicePort{
-				{Port: 8081, TargetPort: convert[int32, intstr.IntOrString](8081)},
+				{Port: 8081, TargetPort: intstr.FromInt(8081)},
 			},
 		},
 	}
@@ -240,6 +240,6 @@ func parsePosition(pos string) (int, int) {
 }
 
 // convert converts src of type S to type D
-func convert[S, D any](src S) D { 
+func convert[S, D any](src S) D {
 	return any(src).(D)
 }
