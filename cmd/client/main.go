@@ -54,7 +54,7 @@ func main() {
 // look asks the Coordinator what's at your current spot (x,y)
 func look(x, y int) {
 	// Builds a web address like "http://coordinator:8080/look?x=0y=0"
-	url := fmt.Sprintf("http://89.168.53.227:8080/look?x=%d&y=%d", x, y)
+	url := fmt.Sprintf("http://89.168.40.169:8080/look?x=%d&y=%d", x, y)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't see anything-world's not responding!")
@@ -88,7 +88,7 @@ func move(x, y *int, direction string) {
 	}
 
 	// Tell the Coordinator: "I'm moving to (newX, newY)"
-	url := fmt.Sprintf("http://89.168.53.227:8080/move?x=%d&y=%d", newX, newY)
+	url := fmt.Sprintf("http://89.168.40.169:8080/move?x=%d&y=%d", newX, newY)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't move-world's not responding!")
