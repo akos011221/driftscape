@@ -9,6 +9,12 @@ import (
 )
 
 func main() {
+	coordAddr := os.Getenv("COORDINATOR_ADDR")
+	if coordAddr == "" {
+		coordAddr = "http://localhost:8080" // Default for local testing
+		fmt.Println("No COORDINATOR_ADDR set, using default:", coordAddr)
+	}
+
 	fmt.Println("Welcome to DriftScape!")
 	fmt.Println("Commands: move north/south/east/west, look, quit")
 
@@ -37,14 +43,14 @@ func main() {
 			fmt.Println("See you next time!")
 			return
 		case "look":
-			look(x, y) // Shows where you are
+			look(coordAddr, x, y) // Shows where you are
 		case "move":
 			if len(words) < 2 { // Direction is not provided
 				fmt.Println("Where? Use: move north/south/east/west")
 				continue
 			}
 			direction := words[1]
-			move(&x, &y, direction) // Updates your position and tells the Coordinator
+			move(coordAddr, &x, &y, direction) // Updates your position and tells the Coordinator
 		default:
 			fmt.Println("Huh? Try: move north, look, or quit")
 		}
@@ -52,9 +58,9 @@ func main() {
 }
 
 // look asks the Coordinator what's at your current spot (x,y)
-func look(x, y int) {
+func look(coordAddr string, x, y int) {
 	// Builds a web address like "http://coordinator:8080/look?x=0y=0"
-	url := fmt.Sprintf("http://89.168.40.169:8080/look?x=%d&y=%d", x, y)
+	url := fmt.Sprintf("%s/look?x=%d&y=%d", coordAddr, x, y)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't see anything-world's not responding!")
@@ -69,7 +75,7 @@ func look(x, y int) {
 }
 
 // move updates your position and tells the Coordinator you moved
-func move(x, y *int, direction string) {
+func move(coordAddr string, x, y *int, direction string) {
 	newX, newY := *x, *y // Copies your current spot
 
 	// Adjust position based on direction
@@ -88,7 +94,7 @@ func move(x, y *int, direction string) {
 	}
 
 	// Tell the Coordinator: "I'm moving to (newX, newY)"
-	url := fmt.Sprintf("http://89.168.40.169:8080/move?x=%d&y=%d", newX, newY)
+	url := fmt.Sprintf("%s/move?x=%d&y=%d", coordAddr, newX, newY)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Can't move-world's not responding!")
