@@ -27,45 +27,85 @@
 +------------------------------------------------------+
 
 +--------------------[ Project Goals ]------------------+
->>> Level 1: Minimal Viable World                    <<<
-- Goal: Establish a basic grid with region generation.  
-- Features: CLI supporting "move <direction>", "look",  
-  and "quit". Coordinator tracks position in memory,    
-  simulates pod creation. Region pods generate random   
-  terrain types (e.g., "forest").                       
-- Status: Completed, transitioned to Level 2.           
-- Tech: Go, basic Kubernetes with manual pod            
-  management, HTTP/REST.                                
->>> Level 2: Persistent Grid                         <<<
-- Goal: Enable persistence and automate pod lifecycle.  
-- Features: Redis stores position and region data.      
-  Coordinator uses the Kubernetes API to spawn and      
-  remove pods. Handles negative coordinates (e.g.,  
-  "-1,1" mapped to "n1,1" labels).                      
-- Status: Completed on February 28, 2025, running on    
-  OKE.                                                  
-- Tech: Go, Kubernetes (OKE), Redis, Docker,            
-  HTTP/REST. Next Step: Address occasional delays       
-  when moving to new regions.                           
->>> Level 3: Dynamic World                           <<<
-- Goal: Enhance regions and improve scalability.    
-- Features: Generate detailed terrain (e.g., "forest    
-  with a river") using procedural methods. Implement    
-  autoscaling with Horizontal Pod Autoscaler (HPA).     
-  Coordinate region borders (e.g., continuous rivers).  
-  Adopt gRPC for efficient pod communication.           
-- Status: Not yet started.                          
-- Tech: Advanced Go generation, Kubernetes HPA, gRPC
-  replacing HTTP.                                       
->>> Level 4: Interactive Ecosystem                   <<<
-- Goal: Support multiple players and interactive        
-  elements.                                             
-- Features: Allow multiple users to share the same      
-  world with pod reuse. Introduce NPCs and items    
-  (e.g., "a bandit appears"). Replace CLI with a web-   
-  based interface.                                      
-- Status: Not yet started.                              
-- Tech: Go concurrency, Kubernetes multi-pod            
-  management, gRPC, web frontend.                   
+|                                                      |
+| >>> Level 1: Minimal Viable World                    |
+|                                                      |
+| Goal:                                                |
+| Establish a basic grid with region generation.       |
+|                                                      |
+| Features:                                            |
+| - CLI supporting "move <direction>", "look", and     |
+|   "quit".                                            |
+| - Coordinator tracks position in memory,             |
+|   simulates pod creation.                            |
+| - Region pods generate random terrain types          |
+|   (e.g., "forest").                                  |
+|                                                      |
+| Status:                                              |
+| Completed, transitioned to Level 2.                  |
+|                                                      |
+| Tech:                                                |
+| Go, basic Kubernetes with manual pod management,     |
+| HTTP/REST.                                           |
+|                                                      |
+| >>> Level 2: Persistent Grid                         |
+|                                                      |
+| Goal:                                                |
+| Enable persistence and automate pod lifecycle.       |
+|                                                      |
+| Features:                                            |
+| - Redis stores position and region data.             |
+| - Coordinator uses the Kubernetes API to spawn and   |
+|   remove pods.                                       |
+| - Handles negative coordinates (e.g., "-1,1" mapped  |
+|   to "n1,1" labels).                                 |
+|                                                      |
+| Status:                                              |
+| Completed on February 28, 2025, running on OKE.      |
+|                                                      |
+| Tech:                                                |
+| Go, Kubernetes (OKE), Redis, Docker, HTTP/REST.      |
+|                                                      |
+| Next Step:                                           |
+| Address occasional delays when moving to new regions.|
+|                                                      |
+| >>> Level 3: Dynamic World                           |
+|                                                      |
+| Goal:                                                |
+| Enhance regions and improve scalability.             |
+|                                                      |
+| Features:                                            |
+| - Generate detailed terrain (e.g., "forest with a    |
+|   river") using procedural methods.                  |
+| - Implement autoscaling with Horizontal Pod          |
+|   Autoscaler (HPA).                                  |
+| - Coordinate region borders (e.g., continuous rivers)|
+| - Adopt gRPC for efficient pod communication.        |
+|                                                      |
+| Status:                                              |
+| Not yet started.                                     |
+|                                                      |
+| Tech:                                                |
+| Advanced Go generation, Kubernetes HPA,              |
+| gRPC replacing HTTP.                                 |
+|                                                      |
+| >>> Level 4: Interactive Ecosystem                   |
+|                                                      |
+| Goal:                                                |
+| Support multiple players and interactive elements.   |
+|                                                      |
+| Features:                                            |
+| - Allow multiple users to share the same world with  |
+|   pod reuse.                                         |
+| - Introduce NPCs and items (e.g., "a dog appears").  |
+| - Replace CLI with a web-based interface.            |
+|                                                      |
+| Status:                                              |
+| Not yet started.                                     |
+|                                                      |
+| Tech:                                                |
+| Go concurrency, Kubernetes multi-pod management,     |
+| gRPC, web frontend.                                  |
+|                                                      |
 +------------------------------------------------------+
 ```
