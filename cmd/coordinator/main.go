@@ -158,7 +158,7 @@ func spawnRegion(x, y int) string {
 			Name: podName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: convert[int, *int32](1),
+			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "region",
@@ -239,7 +239,5 @@ func parsePosition(pos string) (int, int) {
 	return x, y
 }
 
-// convert converts src of type S to type D
-func convert[S, D any](src S) D {
-	return any(src).(D)
-}
+// int32Ptr creates a pointer to an int32 value
+func int32Ptr(i int32) *int32 { return &i }
