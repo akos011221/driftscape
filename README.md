@@ -1,43 +1,63 @@
-# DriftScape - A Quick Overview
+<p align="center">
+  <img src="https://via.placeholder.com/150x50.png?text=DriftScape" alt="DriftScape Logo" />
+</p>
 
-**DriftScape** is an exploration game where you wander a grid-based world that grows as you move. Start at (0,0), type commands like `move north`, and watch new regions—like forests or plains—spring to life. Each region is a Kubernetes pod, spawned dynamically, with Go powering the fast, random generation. A Coordinator tracks your journey, and the world expands infinitely, blending tech and adventure in a minimalist package.
+<h1 align="center">DriftScape</h1>
 
-# My Goals
+<p align="center">
+  <strong>A Procedural Exploration Adventure Powered by Go & Kubernetes</strong>
+</p>
 
-## Level 1: Minimal Viable World
-- **Goal**: Basic grid where you move and see random regions as pods.
+<p align="center">
+  <a href="https://github.com/orbanakos2312/driftscape/actions"><img src="https://img.shields.io/github/workflow/status/orbanakos2312/driftscape/build?label=Build" alt="Build Status"></a>
+  <a href="https://golang.org"><img src="https://img.shields.io/badge/Go-1.21-blue" alt="Go Version"></a>
+  <a href="https://kubernetes.io"><img src="https://img.shields.io/badge/Kubernetes-OKE-brightgreen" alt="Kubernetes"></a>
+  <a href="https://redis.io"><img src="https://img.shields.io/badge/Redis-Enabled-red" alt="Redis"></a>
+</p>
+
+---
+
+## 🌍 Overview
+
+**DriftScape** is an exploration game where you roam a grid-based world that grows with every step. Start at `(0,0)`, type `move north`, and watch new regions—like sprawling forests or windswept plains—emerge as Kubernetes pods. Built with Go for lightning-fast generation, a Coordinator tracks your journey, and Redis keeps your world alive across restarts. It’s a minimalist adventure fused with cutting-edge tech, running on Oracle Kubernetes Engine (OKE).
+
+---
+
+## 🚀 My Goals
+
+### Level 1: Minimal Viable World
+- **Goal**: Kick off with a simple grid and random regions.
 - **Features**:
-  - CLI with `move <direction>`, `look`, `quit`.
+  - CLI commands: `move <direction>`, `look`, `quit`.
   - Coordinator tracks position in memory, fakes pod spawning.
-  - Region pods serve random terrain (e.g., "forest").
-- **Status**: Done, evolved into Level 2.
+  - Region pods dish out random terrain (e.g., `"forest"`).
+- **Status**: ✅ Done, evolved into Level 2.
 - **Tech**: Go, basic Kubernetes (manual pods), no persistence.
 
-## Level 2: Persistent Grid
-- **Goal**: World persists across restarts, pods spawn/clean up automatically.
+### Level 2: Persistent Grid
+- **Goal**: Make the world stick around with auto-managed pods.
 - **Features**:
-  - Redis stores position and region types.
-  - Coordinator uses K8s API to spawn region pods.
-  - Old pods delete when moving, new ones spawn.
-  - Negative coords supported (e.g., -1,1 → n1,1 labels).
-- **Status**: Done (Feb 28, 2025), running on OKE.
+  - Redis stores your position and region types.
+  - Coordinator spawns pods via K8s API, cleans up old ones.
+  - Supports negative coords (e.g., `-1,1` → `n1,1` labels).
+- **Status**: ✅ Done (Feb 28, 2025), live on OKE.
 - **Tech**: Go, Kubernetes (OKE), Redis, Docker.
-- **Polish Needed**: Fix occasional hang when moving (pod readiness lag).
+- **Polish Needed**: Smooth out occasional hangs (pod readiness lag).
 
-## Level 3: Dynamic World
-- **Goal**: Richer, scalable regions.
+### Level 3: Dynamic World
+- **Goal**: Spice up regions with depth and scale.
 - **Features**:
-  - Detailed terrain (e.g., "forest with a river") via procedural rules.
-  - Autoscaling (HPA) for busy regions.
-  - Border sync between adjacent pods (e.g., river flows).
-- **Status**: Not started.
-- **Tech**: Enhance Go generation, K8s HPA.
+  - Rich terrain (e.g., `"forest with a river"`) via procedural rules.
+  - Autoscaling with Horizontal Pod Autoscaler (HPA).
+  - Sync borders between pods (e.g., rivers flow across regions).
+- **Status**: ⏳ Not started.
+- **Tech**: Enhanced Go generation, K8s HPA.
 
-## Level 4: Interactive Ecosystem
-- **Goal**: Multiplayer and interactivity.
+### Level 4: Interactive Ecosystem
+- **Goal**: Go big with multiplayer and interactivity.
 - **Features**:
-  - Multiple users in same world (shared pods).
-  - NPCs/items in regions (e.g., "a bandit attacks").
-  - Web UI replacing CLI.
-- **Status**: Not started.
+  - Multiple explorers sharing the world (pod reuse).
+  - NPCs and items (e.g., `"a bandit attacks!"`).
+  - Swap CLI for a slick web UI.
+- **Status**: ⏳ Not started.
 - **Tech**: Go concurrency, K8s multi-pod logic, web frontend.
