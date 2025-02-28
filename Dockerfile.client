@@ -1,6 +1,6 @@
 FROM golang:1.23.2 AS builder
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/client/ ./cmd/client/
 RUN GOOS=linux GOARCH=amd64 go build -o driftscape-client ./cmd/client

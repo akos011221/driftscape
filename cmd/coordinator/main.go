@@ -1,15 +1,45 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/redis/go-redis/v9"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
-// A map to track, where the key is the region (x,y), value is the region's pod name
-var regions = make(map[string]string)
+var (
+	rdb       *redis.Client
+	clientset *kubernetes.Clientset
+)
 
 func main() {
+	// Connect to Redis (assumes redis:6379 in Kubernetes)
+	rdb = redis.NewClient(&redis.Options{
+		Addr: "redis:6379", // Service name in K8s
+	})
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		panic("Redis connection failed: " + err.Error())
+	}
+
+	// Connect to Kubernetes (in-cluster config)
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic("Kubernetes config failed: " + err.Error())
+	}
+	clientset, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic("Kubernetes client failed: " + err.Error())
+	}
+
 	http.HandleFunc("/look", lookHandler)
 	http.HandleFunc("/move", moveHandler)
 
@@ -20,38 +50,34 @@ func main() {
 // lookHandler responds when the Client asks what's at (x,y)
 func lookHandler(w http.ResponseWriter, r *http.Request) {
 	// Gets x and y from the request (e.g., "?x=0&y=1")
-	xStr := r.URL.Query().Get("x")
-	yStr := r.URL.Query().Get("y")
-
-	x, err := strconv.Atoi(xStr)
+	x, y, err := getXY(r)
 	if err != nil {
-		http.Error(w, "Bad x!", 400)
-		return
-	}
-	y, err := strconv.Atoi(yStr)
-	if err != nil {
-		http.Error(w, "Bad y!", 400)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
-	key := fmt.Sprintf("%d,%d", x, y)
-
-	if _, exists := regions[key]; !exists {
-		// No real pods yet.
-		regions[key] = "region-" + key
+	// Get current region from Redis
+	key := fmt.Sprintf("region:%d,%d", x, y)
+	regionData, err := rdb.Get(context.Background(), key).Result()
+	if err == redis.Nil {
+		// New region, spawn it
+		regionData = spawnRegion(x, y)
+	} else if err != nil {
+		http.Error(w, "Redis error", 500)
+		return
 	}
 
-	// Ask the region what it looks like (fake URL for now)
-	url := fmt.Sprintf("http://%s:8081/desc", regions[key])
+	// ASk the region pod for its description
+	podName := fmt.Sprintf("region-%d-%d", x, y)
+	url := fmt.Sprintf("http://%s:8081/desc", podName)
 	resp, err := http.Get(url)
 	if err != nil {
-		// Fake response for now.
-		fmt.Fprintf(w, "You're near the ocean at (%d,%d)", x, y)
+		// Fallback description if the pod isn't ready yet
+		// Prints a simpler message using the data from Redis
+		fmt.Fprintf(w, "You're in a %s at (%d,%d)", regionData, x, y)
 		return
 	}
 	defer resp.Body.Close()
-
-	// Pass the region's description back to the Client
 	buf := make([]byte, 1024)
 	n, _ := resp.Body.Read(buf)
 	w.Write(buf[:n])
@@ -59,35 +85,157 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 
 // moveHandler handles when you move to a new spot
 func moveHandler(w http.ResponseWriter, r *http.Request) {
-	xStr := r.URL.Query().Get("x")
-	yStr := r.URL.Query().Get("y")
-
-	x, err := strconv.Atoi(xStr)
+	x, y, err := getXY(r)
 	if err != nil {
-		http.Error(w, "Bad x!", 400)
-		return
-	}
-	y, err := strconv.Atoi(yStr)
-	if err != nil {
-		http.Error(w, "Bad y!", 400)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
-	key := fmt.Sprintf("%d,%d", x, y)
-	if _, exists := regions[key]; !exists {
-		regions[key] = "region-" + key // Fake pod spawn
+	// Get old position from Redis
+	oldPos, err := rdb.Get(context.Background(), "user:position").Result()
+	if err != nil && err != redis.Nil {
+		http.Error(w, "Redis error", 500)
+		return
 	}
 
-	// Tell the Client what's there
-	url := fmt.Sprintf("http://%s:8080/desc", regions[key])
+	// If there's an old position, clean up its pod
+	if oldPos != "" && oldPos != fmt.Sprintf("%d,%d", x, y) {
+		oldX, oldY := parsePosition(oldPos)
+		deleteRegion(oldX, oldY)
+	}
+
+	// Check or spawn new region
+	key := fmt.Sprintf("region:%d,%d", x, y)
+	regionData, err := rdb.Get(context.Background(), key).Result()
+	if err == redis.Nil {
+		regionData = spawnRegion(x, y)
+	} else if err != nil {
+		http.Error(w, "Redis error", 500)
+		return
+	}
+
+	// Update position in Redis
+	rdb.Set(context.Background(), "user:position", fmt.Sprintf("%d,%d", x, y), 0)
+
+	// Get description from new region
+	podName := fmt.Sprintf("region-%d-%d", x, y)
+	url := fmt.Sprintf("http://%s:8081/desc", podName)
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Fprintf(w, "You moved to a quiet place at (%d,%d)", x, y)
+		// Fallback description if the pod isn't ready yet
+		// Prints a simpler message using data from Redis
+		fmt.Fprintf(w, "You moved to a %s at (%d,%d)", regionData, x, y)
 		return
 	}
 	defer resp.Body.Close()
-
 	buf := make([]byte, 1024)
 	n, _ := resp.Body.Read(buf)
 	w.Write(buf[:n])
 }
+
+// getXY extracts x,y from the HTTP request
+func getXY(r *http.Request) (int, int, error) {
+	xStr := r.URL.Query().Get("x")
+	yStr := r.URL.Query().Get("y")
+	x, err := strconv.Atoi(xStr)
+	if err != nil {
+		return 0, 0, fmt.Errorf("Bad x!")
+	}
+	y, err := strconv.Atoi(yStr)
+	if err != nil {
+		return 0, 0, fmt.Errorf("Bad y!")
+	}
+	return x, y, nil
+}
+
+// spawnRegion creates a new region pod and saves it to Redis
+func spawnRegion(x, y int) string {
+	podName := fmt.Sprintf("region-%d-%d", x, y)
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: podName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "region",
+					"x":   strconv.Itoa(x),
+					"y":   strconv.Itoa(y),
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "region",
+						"x":   strconv.Itoa(x),
+						"y":   strconv.Itoa(y),
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "region",
+							Image: "driftscape-region",
+							Env: []corev1.EnvVar{
+								{Name: "REGION_X", Value: strconv.Itoa(x)},
+								{Name: "REGION_Y", Value: strconv.Itoa(y)},
+							},
+							Ports: []corev1.ContainerPort{{ContainerPort: 8081}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create Deployment in default namespace
+	_, err := clientset.AppsV1().Deployments("default").Create(context.Background(), deployment, metav1.CreateOptions{})
+	if err != nil {
+		fmt.Println("Failed to spawn region:", err)
+	}
+
+	// Create Service for the pod
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: podName,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": "region",
+				"x":   strconv.Itoa(x),
+				"y":   strconv.Itoa(y),
+			},
+			Ports: []corev1.ServicePort{
+				{Port: 8081, TargetPort: int32Ptr(8081).IntVal},
+			},
+		},
+	}
+	_, err = clientset.CoreV1().Services("default").Create(context.Background(), service, metav1.CreateOptions{})
+	if err != nil {
+		fmt.Println("Failed to create service:", err)
+	}
+
+	// Save basic region type to Redis (pod will refine it)
+	regionType := "unknown" // Placeholder, pod sets real type
+	rdb.Set(context.Background(), fmt.Sprintf("region:%d,%d", x, y), regionType, 0)
+	return regionType
+}
+
+// deleteRegion removes a region pod
+func deleteRegion(x, y int) {
+	podName := fmt.Sprintf("region-%d-%d", x, y)
+	clientset.AppsV1().Deployments("default").Delete(context.Background(), podName, metav1.DeleteOptions{})
+	clientset.CoreV1().Services("default").Delete(context.Background(), podName, metav1.DeleteOptions{})
+}
+
+// parsePosition splits "x,y" into numbers
+func parsePosition(pos string) (int, int) {
+	parts := strings.Split(pos, ",")
+	x, _ := strconv.Atoi(parts[0])
+	y, _ := strconv.Atoi(parts[1])
+	return x, y
+}
+
+// int32Ptr is a helper for Kubernetes pointers
+func int32Ptr(i int32) *int32 { return &i }
