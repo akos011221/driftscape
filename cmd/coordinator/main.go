@@ -178,7 +178,7 @@ func spawnRegion(x, y int) string {
 					Containers: []corev1.Container{
 						{
 							Name:  "region",
-							Image: "driftscape-region",
+							Image: "orbanakos2312/driftscape-region",
 							Env: []corev1.EnvVar{
 								{Name: "REGION_X", Value: strconv.Itoa(x)},
 								{Name: "REGION_Y", Value: strconv.Itoa(y)},
