@@ -12,6 +12,7 @@ spec:
       labels:
         app: coordinator
     spec:
+      serviceAccountName: driftscape-coordinator # Linked RBAC
       containers:
         - name: coordinator
           image: orbanakos2312/driftscape-coordinator
