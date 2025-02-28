@@ -1,15 +1,29 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/redis/go-redis/v9"
 )
 
+var rdb *redis.Client
+
 func main() {
+	// Connect to Redis
+	rdb = redis.NewClient(&redis.Options{
+		Addr: "redis:6379",
+	})
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		fmt.Println("Redis connection failed:", err)
+	}
+
 	http.HandleFunc("/desc", descHandler)
 	fmt.Println("Region running on :8081")
 	http.ListenAndServe(":8081", nil)

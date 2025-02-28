@@ -4,7 +4,7 @@ metadata:
   name: driftscape-coordinator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-Kind: Role
+kind: Role
 metadata:
   name: driftscape-coordinator-role
 rules:
