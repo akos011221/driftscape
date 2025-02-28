@@ -34,6 +34,11 @@ func descHandler(w http.ResponseWriter, r *http.Request) {
 	// Pick a terrain type
 	places := []string{"forest", "plains", "hill", "swamp"}
 	place := places[rand.Intn(len(places))]
+
+	// Save the type to Redis
+	key := fmt.Sprintf("region:%d,%d", x, y)
+	rdb.Set(context.Background(), key, place, 0)
+
 	fmt.Fprintf(w, "You're in a %s", place)
 }
 
