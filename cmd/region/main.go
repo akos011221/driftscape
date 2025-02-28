@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	rdb *redis.Client
-	domain = "default.svc.driftscape-cluster.oraclecloud.com"
+	rdb    *redis.Client
+	domain = "default.svc.cluster.local"
 )
 
 func main() {
 	// Connect to Redis
 	rdb = redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("redis.%d:6379", domain),
+		Addr: fmt.Sprintf("redis.%s:6379", domain),
 	})
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
@@ -46,7 +46,7 @@ func descHandler(w http.ResponseWriter, r *http.Request) {
 	seed := h.Sum32()
 	// Custom rand to avoid time-based seeding,
 	// so restarts don't change region
-	rand := newRand(int64(seed)) 
+	rand := newRand(int64(seed))
 
 	// Pick a terrain type
 	places := []string{"forest", "plains", "hill", "swamp"}
