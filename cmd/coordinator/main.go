@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,12 +42,26 @@ func main() {
 	if err != nil {
 		panic("Kubernetes client failed: " + err.Error())
 	}
-
+	
 	http.HandleFunc("/look", lookHandler)
 	http.HandleFunc("/move", moveHandler)
+	http.HandleFunc("/position", positionHandler)
 
 	fmt.Println("Coordinator running on :8080")
 	http.ListenAndServe(":8080", nil)
+}
+
+// positionHandler responds when the Client asks its starting position
+func positionHandler(w http.ResponseWriter, r *http.Request) {
+	pos, err := rdb.Get(context.Background(), "user:position").Result()
+	if err == redis.Nil {
+		fmt.Fprintf(w, "0,0") // Center, if no position
+	} else if err != nil {
+		http.Error(w, "Redis error", 500)
+		return
+	} else {
+		fmt.Fprintf(w, pos) // Send last known position
+	}
 }
 
 // lookHandler responds when the Client asks what's at (x,y)
@@ -71,7 +86,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 	// Ask the region pod for its description
 	podName := fmt.Sprintf("region-%d-%d", x, y)
 	url := fmt.Sprintf("http://%s.%s:8081/desc", podName, domain)
-	resp, err := http.Get(url)
+	resp, err := retryGET(url)
 	if err != nil {
 		// Fallback description if the pod isn't ready yet
 		// Prints a simpler message using the data from Redis
@@ -121,7 +136,7 @@ func moveHandler(w http.ResponseWriter, r *http.Request) {
 	// Get description from new region
 	podName := fmt.Sprintf("region-%d-%d", x, y)
 	url := fmt.Sprintf("http://%s.%s:8081/desc", podName, domain)
-	resp, err := http.Get(url)
+	resp, err := retryGET(url)
 	if err != nil {
 		// Fallback description if the pod isn't ready yet
 		// Prints a simpler message using data from Redis
@@ -199,6 +214,17 @@ func spawnRegion(x, y int) string {
 								{Name: "REGION_Y", Value: strconv.Itoa(y)},
 							},
 							Ports: []corev1.ContainerPort{{ContainerPort: 8081}},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/desc",
+										Port: intstr.FromInt(8081),
+									},
+								},
+								InitialDelaySeconds: 2, // Wait 2s before first check
+								PeriodSeconds:	  2, // Check every 2s
+								FailureThreshold: 3, // Fail after 3 tries
+							},
 						},
 					},
 				},
@@ -262,3 +288,19 @@ func regionExists(x, y int) bool {
 
 // int32Ptr creates a pointer to an int32 value
 func int32Ptr(i int32) *int32 { return &i }
+
+// retryGET tries HTTP GET with retries and timeout
+func retryGET(url string) (*http.Response, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second, // Fail after 5s total
+	}
+	for i := 0; i < 3; i++ { // Try 3 times
+		resp, err := client.Get(url)
+		if err == nil {
+			return resp, nil
+		}
+		fmt.Println("Retrying", url, "attempt", i+1, ":", err)
+		time.Sleep(1 * time.Second) // Wait 1s between tries
+	}
+	return nil, fmt.Errorf("failed after retries")
+}
