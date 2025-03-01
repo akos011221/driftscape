@@ -66,8 +66,8 @@
 | Tech:                                                |
 | Go, Kubernetes (OKE), Redis, Docker, HTTP/REST.      |
 |                                                      |
-| Next Step:                                           |
-| Address occasional delays when moving to new regions.|
+| Bug fixes:                                           |
+| Addressed long delays when moving to new regions.    |
 |                                                      |
 | >>> Level 3: Dynamic World                           |
 |                                                      |
