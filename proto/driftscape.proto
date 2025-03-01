@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package driftscape;
+
+option go_package = "./proto";
+
+// Defines how Coordinator talks to Region pods
+service RegionService {
+	// Fetches a region's details
+	rpc GetDescription(Position) returns (Description) {}
+}
+
+// Position is the x,y coordinates
+message Position {
+	int32 x = 1;
+	int32 y = 2;
+}
+
+// Description is what a region looks like
+message Description {
+	string terrain = 1; // e.g., "swamp with frogs"
+}
