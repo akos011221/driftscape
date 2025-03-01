@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"strconv"
 )
 
 func main() {
@@ -15,11 +16,15 @@ func main() {
 		fmt.Println("No COORDINATOR_ADDR set, using default:", coordAddr)
 	}
 
+	// Fetch starting position from Coordinator
+	x, y, err := getStartingPosition(coordAddr)
+	if err != nil {
+		fmt.Println("Failed to get starting position, defaulting to (0,0):",err)
+		x, y = 0, 0
+	}
+
 	fmt.Println("Welcome to DriftScape!")
 	fmt.Println("Commands: move north/south/east/west, look, quit")
-
-	// Your position on the grid starts at the center (0,0)
-	x, y := 0, 0
 
 	// A loop to keep asking for commands
 	scanner := bufio.NewScanner(os.Stdin) // Reads the keyboard input
@@ -55,6 +60,22 @@ func main() {
 			fmt.Println("Huh? Try: move north, look, or quit")
 		}
 	}
+}
+
+// getStartingPosition asks the Coordinator the starting spot
+func getStartingPosition(coordAddr string) (int, int, error) {
+	url := fmt.Sprintf("%s/position", coordAddr)
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer resp.Body.Close()
+
+	buf := make([]byte, 1024)
+	n, _ := resp.Body.Read(buf)
+	posStr := string(buf[:n])
+	x, y := parsePosition(posStr)
+	return x, y, nil
 }
 
 // look asks the Coordinator what's at your current spot (x,y)
@@ -109,4 +130,12 @@ func move(coordAddr string, x, y *int, direction string) {
 
 	// If it worked, update your position
 	*x, *y = newX, newY
+}
+
+// parsePosition converts (x,y) string to x, y int
+func parsePosition(pos string) (int, int) {
+	parts := strings.Split(pos, ",")
+	x, _ := strconv.Atoi(parts[0])
+	y, _ := strconv.Atoi(parts[1])
+	return x, y
 }
