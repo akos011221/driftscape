@@ -335,7 +335,7 @@ func resourceMustParse(s string) resource.Quantity {
 func getRegionDescription(podName string, x, y int) (string, error) {
 	// Connect to Region pod via gRPC
 	// Example: Dials "region-2-4:8081", sends x=2, y=4
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf("%s.%s:8081", podName, domain),
 		grpc.WithTransportCredentials(insecure.NewCredentials()), // No TLS for simplicity
 	)
