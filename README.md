@@ -1,6 +1,6 @@
        _____________________
       |                     |
-      |     DriftScape     |
+      |     DriftScape      |
       |_____________________|
 
        A Procedural Exploration Game
