@@ -6,7 +6,9 @@ Built with Go and Kubernetes
 **Status:** Level 3  
 **Go:** 1.21  
 **Kubernetes:** OKE  
-**Redis:** Enabled  
+**Redis:** Enabled
+
+<img src="https://www.upload.ee/image/17808786/grids.jpeg" height="300" />
 
 ## Overview
 
