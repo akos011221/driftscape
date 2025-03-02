@@ -221,9 +221,8 @@ func spawnRegion(x, y int) string {
 							Ports: []corev1.ContainerPort{{ContainerPort: 8081}},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/desc",
-										Port: intstr.FromInt(8081),
+									GRPC: &corev1.GRPCAction{
+										Port: 8081,
 									},
 								},
 								InitialDelaySeconds: 2, // Wait 2s before first check
