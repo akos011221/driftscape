@@ -71,14 +71,14 @@ func generateTerrain(x, y int) string {
 	r := newRand(int64(seed))
 
 	// Base terrain types
-	bases := []string{"forest", "plains", "hills", "swamp", "coast", "river"}
+	bases := []string{"forest", "plains", "hills", "swamp", "coast"}
 	base := bases[r.Intn(len(bases))]
 
 	// Add features with border sync
 	// Example: If (2,3) has a river south, (2,4) reflects it
 	feature := ""
 	if r.Float32() < 0.3 { // 30% chance of a feature
-		features := []string{"", "with a cave", "with ancient ruins", "with a waterfall"}
+		features := []string{"", "with a cave", "with ancient ruins", "with a waterfall", "with a river"}
 		feature = " " + features[r.Intn(len(features))]
 		if strings.Contains(feature, "river") {
 			// Check south neighbor for river
