@@ -78,7 +78,7 @@ func generateTerrain(x, y int) string {
 	// Example: If (2,3) has a river south, (2,4) reflects it
 	feature := ""
 	if r.Float32() < 0.3 { // 30% chance of a feature
-		features := []string{"", "with a cave", "with ancient ruins", "with a waterfall"}
+		features := []string{"with rocky outcrops", "with a cave", "with ancient ruins", "with a waterfall"}
 		feature = " " + features[r.Intn(len(features))]
 		if strings.Contains(feature, "river") {
 			// Check south neighbor for river
