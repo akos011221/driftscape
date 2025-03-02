@@ -7,12 +7,11 @@ import (
 	"math/rand"
 	"net"
 	"strings"
-	
+
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
-	
-	pb "github.com/akos011221/driftscape/proto"
 
+	pb "github.com/akos011221/driftscape/proto"
 )
 
 var (

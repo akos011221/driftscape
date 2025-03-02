@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/akos011221/driftscape/proto"
 )
@@ -49,7 +49,7 @@ func main() {
 	if err != nil {
 		panic("Kubernetes client failed: " + err.Error())
 	}
-	
+
 	http.HandleFunc("/look", lookHandler)
 	http.HandleFunc("/move", moveHandler)
 	http.HandleFunc("/position", positionHandler)
@@ -80,7 +80,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	
+
 	// Check or spawn region in Redis/K8s
 	// Example: "region:2,3" -> "forest" or spawn pod
 	key := fmt.Sprintf("region:%d,%d", x, y)
@@ -91,7 +91,7 @@ func lookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Redis error", 500)
 		return
 	}
-	
+
 	// Call Region pod via gRPC
 	// Example: Dial "region-2-3:8081", get "forest with a river"
 	podName := fmt.Sprintf("region-%d-%d", x, y)
@@ -125,7 +125,7 @@ func moveHandler(w http.ResponseWriter, r *http.Request) {
 		oldX, oldY := parsePosition(oldPos)
 		deleteRegion(oldX, oldY)
 	}
-	
+
 	// Check or spawn new region
 	// Example: "region:2,4" -> "plains" or spawn pod
 	key := fmt.Sprintf("region:%d,%d", x, y)
@@ -227,8 +227,8 @@ func spawnRegion(x, y int) string {
 									},
 								},
 								InitialDelaySeconds: 2, // Wait 2s before first check
-								PeriodSeconds:	  2, // Check every 2s
-								FailureThreshold: 3, // Fail after 3 tries
+								PeriodSeconds:       2, // Check every 2s
+								FailureThreshold:    3, // Fail after 3 tries
 							},
 							Resources: corev1.ResourceRequirements{ // For HPA
 								Requests: corev1.ResourceList{
@@ -256,12 +256,12 @@ func spawnRegion(x, y int) string {
 		},
 		Spec: autoscalingv1.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: autoscalingv1.CrossVersionObjectReference{
-				Kind:	"Deployment",
-				Name:	podName,
+				Kind:       "Deployment",
+				Name:       podName,
 				APIVersion: "apps/v1",
 			},
-			MinReplicas: int32Ptr(1),
-			MaxReplicas: 3, // Max 3 pods per region
+			MinReplicas:                    int32Ptr(1),
+			MaxReplicas:                    3, // Max 3 pods per region
 			TargetCPUUtilizationPercentage: int32Ptr(50),
 		},
 	}
