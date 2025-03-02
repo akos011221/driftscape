@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	// Fetch starting position from Coordinator
 	x, y, err := getStartingPosition(coordAddr)
 	if err != nil {
-		fmt.Println("Failed to get starting position, defaulting to (0,0):",err)
+		fmt.Println("Failed to get starting position, defaulting to (0,0):", err)
 		x, y = 0, 0
 	}
 

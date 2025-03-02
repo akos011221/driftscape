@@ -3,6 +3,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/region/ ./cmd/region/
+COPY proto/           ./proto/
 RUN GOOS=linux GOARCH=amd64 go build -o driftscape-region ./cmd/region
 
 FROM alpine:latest
