@@ -219,16 +219,16 @@ func spawnRegion(x, y int) string {
 								{Name: "REGION_Y", Value: strconv.Itoa(y)},
 							},
 							Ports: []corev1.ContainerPort{{ContainerPort: 8081}},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									GRPC: &corev1.GRPCAction{
-										Port: 8081,
-									},
-								},
-								InitialDelaySeconds: 2, // Wait 2s before first check
-								PeriodSeconds:       2, // Check every 2s
-								FailureThreshold:    3, // Fail after 3 tries
-							},
+							//ReadinessProbe: &corev1.Probe{
+							//	ProbeHandler: corev1.ProbeHandler{
+							//		GRPC: &corev1.GRPCAction{
+							//			Port: 8081,
+							//		},
+							//	},
+							//	InitialDelaySeconds: 2, // Wait 2s before first check
+							//	PeriodSeconds:       2, // Check every 2s
+							//	FailureThreshold:    3, // Fail after 3 tries
+							//},
 							Resources: corev1.ResourceRequirements{ // For HPA
 								Requests: corev1.ResourceList{
 									corev1.ResourceCPU: resourceMustParse("100m"),
