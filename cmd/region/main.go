@@ -71,7 +71,7 @@ func generateTerrain(x, y int) string {
 	r := newRand(int64(seed))
 
 	// Base terrain types
-	bases := []string{"forest", "plains", "hills", "swamp", "coast"}
+	bases := []string{"forest", "plains", "hills", "swamp", "coast", "river"}
 	base := bases[r.Intn(len(bases))]
 
 	// Add features with border sync
