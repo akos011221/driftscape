@@ -1,14 +1,14 @@
-# DriftScape
-
-A Procedural Exploration Game  
-Built with Go and Kubernetes
-
-**Status:** Level 3  
-**Go:** 1.21  
-**Kubernetes:** OKE  
-**Redis:** Enabled
-
-<img src="https://www.upload.ee/image/17808786/grids.jpeg" height="300" />
+<div style="text-align: center;">
+  <h1>DriftScape</h1>
+  <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <img src="https://www.upload.ee/image/17808786/grids.jpeg" height="300" />
+    <p>A Procedural Exploration Game<br>Built with Go and Kubernetes</p>
+    <p><strong>Status:</strong> Level 3</p>
+    <p><strong>Go:</strong> 1.21</p>
+    <p><strong>Kubernetes:</strong> OKE</p>
+    <p><strong>Redis:</strong> Enabled</p>
+  </div>
+</div>
 
 ## Overview
 
